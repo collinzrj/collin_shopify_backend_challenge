@@ -13,7 +13,6 @@
   <body>
     <div class="container">
       {% for item in items %}
-      <!-- <p>{{item.name}} {{item.quantity}}</p> -->
       <form class="form-inline" method="POST" action="/update_item/{{item.id}}" style="margin-bottom:10px">
         <label>{{item.name}}</label>
         <div class="form-group mx-sm-3 mb-2">
@@ -33,6 +32,7 @@
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
       </form>
+      <p><a  href="/export" class="btn btn-primary">Export</a></p>
     </div>
     <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>

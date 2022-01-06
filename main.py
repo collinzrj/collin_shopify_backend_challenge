@@ -1,10 +1,12 @@
-from flask import Flask, request, jsonify, render_template, redirect
+from flask import Flask, request, send_file, render_template, redirect
 import uuid
-import json
+import csv
 
 app = Flask(__name__)
 
 class Item:
+    # generate a uuid when add new item
+    # load old id when read from csv
     def __init__(self, name, quantity, id = None):
         if id:
             self.id = id
@@ -16,10 +18,7 @@ class Item:
     def update_quantity(self, quantity):
         self.quantity = quantity
 
-def dumper(obj):
-    return obj.__dict__
-
-items = [Item("apple", 5), Item("banana", 88)]
+items = []
 
 @app.route("/")
 def home():
@@ -30,27 +29,49 @@ def add_item():
     name = request.form.get('name')
     quantity = request.form.get('quantity')
     items.append(Item(name, quantity))
-    with open("items.json", "w") as f:
-        json.dump(items, f, default=dumper)
+    # update csv when items are updated for data persistence
+    update_csv()
     return redirect("/", code=302)
 
 @app.route("/update_item/<id>", methods=["POST"])
 def update_item(id):
+    # iterate over items to find item for update
     for item in items:
         if item.id == id:
+            # check update or remove according to button tapped
             if request.form.get('operation') == 'Update':
                 item.quantity = request.form.get('quantity')
             else:
                 items.remove(item)
-            with open("items.json", "w") as f:
-                json.dump(items, f, default=dumper)
+            update_csv()
             break
     return redirect("/", code=302)
 
-if __name__ == "__main__":
-    with open('items.json') as f:
-        items = json.load(f)
-    for i in range(len(items)):
-        items[i] = Item(**items[i])
-    app.run()
+@app.route("/export")
+def export():
+    # send the csv file to user 
+    return send_file('inventory.csv')
 
+# update csv according to current items
+def update_csv():
+    with open('inventory.csv', 'w') as f:
+        writer = csv.writer(f, delimiter=',')
+        writer.writerow(['id', 'name', 'quantity'])
+        for item in items:
+            writer.writerow([item.id, item.name, item.quantity])
+
+# read csv as items list
+def read_csv():
+    items = []
+    with open('inventory.csv') as f:
+        spamreader = csv.reader(f)
+        for index, row in enumerate(spamreader):
+            if index == 0:
+                pass 
+            else:
+                items.append(Item(row[1], row[2], id=row[0]))
+    return items
+
+if __name__ == "__main__":
+    items = read_csv()
+    app.run()
